@@ -1,59 +1,77 @@
-# Compiled Object files
-**/.DS_Store
-*.slo
-*.lo
+# This file is used to ignore files which are generated
+# ----------------------------------------------------------------------------
+
+*~
+*.autosave
+*.a
+*.core
+*.moc
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
+*.orig
+*.rej
 *.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
+*.so.*
+*_pch.h.cpp
+*_resource.rc
+*.qm
+.#*
+*.*#
+core
+!core/
+tags
+.DS_Store
+.directory
+*.debug
+Makefile*
+*.prl
 *.app
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+Thumbs.db
+*.res
+*.rc
+/.qmake.cache
+/.qmake.stash
 
-**/cmake-build-debug
-**/CMakeCache.txt
-**/cmake_install.cmake
-**/install_manifest.txt
-**/CMakeFiles/
-**/CTestTestfile.cmake
-**/Makefile
-**/*.cbp
-**/CMakeScripts
-**/compile_commands.json
+# qtcreator generated files
+*.pro.user*
+CMakeLists.txt.user*
 
-include/divisible/*
+# xemacs temporary files
+*.flc
 
+# Vim temporary files
+.*.swp
 
-## Local 
+# Visual Studio generated files
+*.ib_pdb_index
+*.idb
+*.ilk
+*.pdb
+*.sln
+*.suo
+*.vcproj
+*vcproj.*.*.user
+*.ncb
+*.sdf
+*.opensdf
+*.vcxproj
+*vcxproj.*
 
-.idea/*.xml
+# MinGW generated files
+*.Debug
+*.Release
 
-build/**/*
+# Python byte code
+*.pyc
 
-include/*
-lib/*
-bin/*
-test/test_runner
-output/*
+# Binaries
+# --------
+*.dll
+*.exe
 
-build
-.vscode
+build/
+.vscode/
+.cache/
