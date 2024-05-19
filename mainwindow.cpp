@@ -39,8 +39,8 @@ cv::Mat getMask(cv::Mat& image, std::vector<float> input_coordinates) {
     cv::cvtColor(image, image, cv::COLOR_BGR2RGB); // SAM awaits an image in RGB format
 
     // Setting up and running the model
-    cppsam::SAMModel model(std::make_shared<vino_executor::ONNXVinoExecutor>(ov::Core(), "/home/filnow/builds/SAM2ONNX/pyth/export/image_encoder.onnx",
-                                                                             "/home/filnow/builds/SAM2ONNX/pyth/export/the_rest.onnx", "CPU"));
+    cppsam::SAMModel model(std::make_shared<vino_executor::ONNXVinoExecutor>(ov::Core(), "/home/filnow/fun/dex-vision/models/image_encoder.onnx",
+                                                                             "/home/filnow/fun/dex-vision/models/the_rest.onnx", "CPU"));
 
     // Making inference
     model.setInput(image);
