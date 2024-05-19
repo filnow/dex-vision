@@ -8,18 +8,25 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(OpenCV_DIR "/home/filnow/builds/build")
-set(onnxruntime_lib "/home/filnow/builds/onnxruntime-linux-x64-1.14.1/lib/libonnxruntime.so")
+set(OpenVINO_DIR "/home/filnow/builds/openvino/build")
+
+set(CPPSAM_LIBRARY_PATH "/home/filnow/builds/SAM2ONNX/build/cppsam/src/libcppsam.a")
+set(VINO_EXECUTOR_LIBRARY_PATH "/home/filnow/builds/SAM2ONNX/build/vino_executor/src/libvino_executor.a")
+
+
+add_library(cppsam STATIC IMPORTED)
+add_library(vino_executor STATIC IMPORTED)
+set_target_properties(vino_executor PROPERTIES IMPORTED_LOCATION ${VINO_EXECUTOR_LIBRARY_PATH})
+set_target_properties(cppsam PROPERTIES IMPORTED_LOCATION ${CPPSAM_LIBRARY_PATH})
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
-
-find_package(gflags CONFIG REQUIRED)
-
 find_package(OpenCV REQUIRED)
+find_package(OpenVINO REQUIRED Runtime ONNX)
 
-include_directories( ${OpenCV_INCLUDE_DIRS} )
-include_directories("/home/filnow/builds/onnxruntime-linux-x64-1.14.1/include")
+include_directories( ${OpenCV_INCLUDE_DIRS} "/home/filnow/builds/SAM2ONNX/cpp/cppsam/include" "/home/filnow/builds/SAM2ONNX/cpp/vino_executor/include")
 
 set(PROJECT_SOURCES
         main.cpp
@@ -32,8 +39,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(dex-vision
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        sam.cpp
-        sam.h
+
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET dex-vision APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -53,7 +60,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(dex-vision PRIVATE Qt${QT_VERSION_MAJOR}::Widgets ${OpenCV_LIBS} ${onnxruntime_lib} gflags)
+target_link_libraries(dex-vision PRIVATE Qt${QT_VERSION_MAJOR}::Widgets ${OpenCV_LIBS} openvino::runtime cppsam vino_executor)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

@@ -19,8 +19,10 @@ public:
 
 private slots:
     void on_pushButton_clicked();
+    void mousePressEvent(QMouseEvent *event);
 
 private:
     Ui::MainWindow *ui;
+    QString file_name;
 };
 #endif // MAINWINDOW_H
