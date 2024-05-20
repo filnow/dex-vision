@@ -9,12 +9,12 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(OpenCV_DIR "/home/filnow/builds/build")
-set(OpenVINO_DIR "/home/filnow/builds/openvino/build")
+set(BASE_DIR "$ENV{BUILD_DIR}")
 
-set(CPPSAM_LIBRARY_PATH "/home/filnow/builds/SAM2ONNX/build/cppsam/src/libcppsam.a")
-set(VINO_EXECUTOR_LIBRARY_PATH "/home/filnow/builds/SAM2ONNX/build/vino_executor/src/libvino_executor.a")
-
+set(OpenCV_DIR "${BASE_DIR}/build")
+set(OpenVINO_DIR "${BASE_DIR}/openvino/build")
+set(CPPSAM_LIBRARY_PATH "${BASE_DIR}/SAM2ONNX/build/cppsam/src/libcppsam.a")
+set(VINO_EXECUTOR_LIBRARY_PATH "${BASE_DIR}/SAM2ONNX/build/vino_executor/src/libvino_executor.a")
 
 add_library(cppsam STATIC IMPORTED)
 add_library(vino_executor STATIC IMPORTED)
@@ -26,19 +26,27 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(OpenCV REQUIRED)
 find_package(OpenVINO REQUIRED Runtime ONNX)
 
-include_directories( ${OpenCV_INCLUDE_DIRS} "/home/filnow/builds/SAM2ONNX/cpp/cppsam/include" "/home/filnow/builds/SAM2ONNX/cpp/vino_executor/include")
+include_directories(
+    ${OpenCV_INCLUDE_DIRS}
+    "${BASE_DIR}/SAM2ONNX/cpp/cppsam/include"
+    "${BASE_DIR}/SAM2ONNX/cpp/vino_executor/include"
+    "${PROJECT_SOURCE_DIR}/src/include"
+)
 
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
+        src/main.cpp
+        src/mainwindow.cpp
+        src/include/mainwindow.h
+        src/mainwindow.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(dex-vision
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        src/include/FastSAM.h src/FastSAM.cpp
+
+
 
 
     )

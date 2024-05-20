@@ -18,6 +18,8 @@
 #include <cppsam/SAMModel.h>
 #include <vino_executor/ONNXVinoExecutor.h>
 
+#include "FastSAM.h"
+
 
 cv::Mat applyMask(const cv::Mat& image, const cv::Mat& mask) {
     cv::Mat result = cv::Mat::zeros(image.size(), image.type());
@@ -26,8 +28,8 @@ cv::Mat applyMask(const cv::Mat& image, const cv::Mat& mask) {
 }
 
 cv::Mat getMask(cv::Mat& image, std::vector<float> input_coordinates) {
+
     std::vector<float> input_labels = { 1 };
-    //std::vector<float> input_coordinates = { 926, 926 };
     std::vector<cv::Point2f> input_points;
 
     for (size_t i = 0; i < input_coordinates.size(); i = i + 2)
@@ -39,8 +41,12 @@ cv::Mat getMask(cv::Mat& image, std::vector<float> input_coordinates) {
     cv::cvtColor(image, image, cv::COLOR_BGR2RGB); // SAM awaits an image in RGB format
 
     // Setting up and running the model
-    cppsam::SAMModel model(std::make_shared<vino_executor::ONNXVinoExecutor>(ov::Core(), "/home/filnow/fun/dex-vision/models/image_encoder.onnx",
-                                                                             "/home/filnow/fun/dex-vision/models/the_rest.onnx", "CPU"));
+    QDir appDir(QCoreApplication::applicationDirPath());
+    appDir.cdUp(); appDir.cdUp();
+    QString modelPath = appDir.absolutePath() + "/models";
+
+    cppsam::SAMModel model(std::make_shared<vino_executor::ONNXVinoExecutor>(ov::Core(), modelPath.toStdString()+"/image_encoder.onnx",
+                                                                             modelPath.toStdString()+"/the_rest.onnx", "CPU"));
 
     // Making inference
     model.setInput(image);
@@ -73,7 +79,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-    file_name = QFileDialog::getOpenFileName(this, "Open a file", QDir::homePath(),
+
+    QDir appDir(QCoreApplication::applicationDirPath());
+    appDir.cdUp(); appDir.cdUp();
+    QString imagePath = appDir.absolutePath() + "/images";
+
+    file_name = QFileDialog::getOpenFileName(this, "Open a file", imagePath,
                             tr("Image Files (*.png *.jpg *.bmp *.tif);;"));
 
     // Check if file name empty
@@ -124,4 +135,25 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
 }
 
+
+void MainWindow::on_pushButton_2_clicked()
+{
+
+    QDir appDir(QCoreApplication::applicationDirPath());
+    appDir.cdUp(); appDir.cdUp();
+    QString modelPath = appDir.filePath("models/FastSAM-s.xml");
+
+    if (file_name != "") {
+        FastSAM fastsam;
+
+        if(fastsam.Initialize(modelPath.toStdString(), 0.2, 0.3, true)) {
+            cv::Mat mask = fastsam.Infer(file_name.toStdString());
+            QImage qimage(mask.data, mask.cols, mask.rows, mask.step, QImage::Format_RGB888);
+            ui->label_pic->setPixmap(QPixmap::fromImage(qimage));
+
+
+        }
+    }
+
+}
 

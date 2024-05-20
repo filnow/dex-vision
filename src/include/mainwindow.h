@@ -21,6 +21,8 @@ private slots:
     void on_pushButton_clicked();
     void mousePressEvent(QMouseEvent *event);
 
+    void on_pushButton_2_clicked();
+
 private:
     Ui::MainWindow *ui;
     QString file_name;
