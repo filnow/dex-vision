@@ -13,54 +13,9 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
-#include <openvino/openvino.hpp>
-
-#include <cppsam/SAMModel.h>
-#include <vino_executor/ONNXVinoExecutor.h>
-
 #include "FastSAM.h"
 
 
-cv::Mat applyMask(const cv::Mat& image, const cv::Mat& mask) {
-    cv::Mat result = cv::Mat::zeros(image.size(), image.type());
-    image.copyTo(result, mask);
-    return result;
-}
-
-cv::Mat getMask(cv::Mat& image, std::vector<float> input_coordinates) {
-
-    std::vector<float> input_labels = { 1 };
-    std::vector<cv::Point2f> input_points;
-
-    for (size_t i = 0; i < input_coordinates.size(); i = i + 2)
-        input_points.emplace_back(input_coordinates[i], input_coordinates[i + 1]);
-
-    if (input_points.size() != input_labels.size())
-        throw std::runtime_error("The number of points and labels must coincide");
-
-    cv::cvtColor(image, image, cv::COLOR_BGR2RGB); // SAM awaits an image in RGB format
-
-    // Setting up and running the model
-    QDir appDir(QCoreApplication::applicationDirPath());
-    appDir.cdUp(); appDir.cdUp();
-    QString modelPath = appDir.absolutePath() + "/models";
-
-    cppsam::SAMModel model(std::make_shared<vino_executor::ONNXVinoExecutor>(ov::Core(), modelPath.toStdString()+"/image_encoder.onnx",
-                                                                             modelPath.toStdString()+"/the_rest.onnx", "CPU"));
-
-    // Making inference
-    model.setInput(image);
-    cv::Mat result = model.predict(input_points, input_labels);
-
-    //preparing for showing the results
-    cv::resize(result, result, cv::Size(), 0.4, 0.4); // resize for convenient representation
-    cv::resize(image, image, cv::Size(), 0.4, 0.4); // resize for convenient representation
-    cv::cvtColor(image, image, cv::COLOR_RGB2BGR); // converting back into BGR format for presenting
-    cv::Mat masked = applyMask(image, result);
-
-    return masked;
-
-}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -125,16 +80,26 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
         qDebug() << "Scaled mouse position:" << scaledX << ", " << scaledY;
 
-        // Call the getMask function and pass the coordinates and the cv_image
-        std::vector<float> input_coordinates = {static_cast<float>(scaledX), static_cast<float>(scaledY)};
+        std::vector<cv::Point2f> cords;
+        cords.push_back(cv::Point2f(scaledX, scaledY));
 
-        cv::Mat masked_image = getMask(image, input_coordinates);
+        QDir appDir(QCoreApplication::applicationDirPath());
+        appDir.cdUp(); appDir.cdUp();
 
-        // Display the masked image on the label
-        QImage qimage(masked_image.data, masked_image.cols, masked_image.rows, masked_image.step, QImage::Format_BGR888);
-        ui->label_pic->setPixmap(QPixmap::fromImage(qimage));
+        QString modelPath = appDir.filePath("models/FastSAM-x.xml");
+
+        FastSAM fastsam;
+
+        if(fastsam.Initialize(modelPath.toStdString(), 0.6, 0.9, true)) {
+            cv::Mat mask = fastsam.Infer(file_name.toStdString(), cords);
+            QImage qimage(mask.data, mask.cols, mask.rows, mask.step, QImage::Format_BGR888);
+            ui->label_pic->setPixmap(QPixmap::fromImage(qimage));
+        }
+
+
     }
 }
+
 
 void MainWindow::on_pushButton_2_clicked()
 {

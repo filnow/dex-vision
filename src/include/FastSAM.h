@@ -11,7 +11,7 @@ public:
     ~FastSAM(){};
 
     bool Initialize(const std::string& xml_path, float conf, float iou, bool useGpu);
-    cv::Mat Infer(const std::string &image_path);
+    cv::Mat Infer(const std::string &image_path, std::vector<cv::Point2f> cords = std::vector<cv::Point2f>());
 
 private:
     std::vector<cv::Mat> Postprocess(const cv::Mat& oriImage);
@@ -28,6 +28,7 @@ private:
 
 private:
     cv::Mat Render(const cv::Mat& image, const std::vector<cv::Mat>& vremat);
+    cv::Mat RenderSingleMask(const cv::Mat &image, const std::vector<cv::Mat>& vremat, std::vector<cv::Point2f> cords);
 
 private:
     ov::Tensor Preprocess(cv::Mat& image);
