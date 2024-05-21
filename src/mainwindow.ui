@@ -14,19 +14,6 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="pushButton">
-    <property name="geometry">
-     <rect>
-      <x>520</x>
-      <y>20</y>
-      <width>231</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Open file</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_pic">
     <property name="geometry">
      <rect>
@@ -39,19 +26,42 @@
     <property name="text">
      <string/>
     </property>
+    <property name="scaledContents">
+     <bool>false</bool>
+    </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>20</y>
-      <width>151</width>
-      <height>51</height>
+      <x>440</x>
+      <y>10</y>
+      <width>351</width>
+      <height>91</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Segment All</string>
-    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="pushButton_3">
+       <property name="text">
+        <string>Orginal Image</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="text">
+        <string>Segment All</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Open file</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

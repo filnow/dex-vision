@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <algorithm>
+#include <QDebug>
 
 
 cv::Scalar RandomColor()
@@ -20,6 +21,7 @@ bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou,  bo
     if(!std::filesystem::exists(xml_path))
         return false;
 
+
     m_model = m_core.read_model(xml_path);
 
     if(!ParseArgs())
@@ -33,47 +35,68 @@ bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou,  bo
 
     m_request = m_compiled_model.create_infer_request();
 
+    qDebug() << "Init sucessfull\n";
+
     return true;
 }
 
 
 cv::Mat FastSAM::Infer(const std::string &image_path)
 {
-    cv::Mat image = cv::imread(image_path);
-    cv::Mat processedImg = image.clone();
-    ov::Tensor input_tensor = Preprocess(processedImg);
+    try {
+        cv::Mat image = cv::imread(image_path);
+        cv::Mat processedImg = image.clone();
+        ov::Tensor input_tensor = Preprocess(processedImg);
 
-    assert(input_tensor.get_size() != 0);
+        assert(input_tensor.get_size() != 0);
 
-    m_request.set_input_tensor(input_tensor);
-    m_request.infer();
+        m_request.set_input_tensor(input_tensor);
+        m_request.infer();
 
-    std::vector<cv::Mat> result =  Postprocess(image);
+        std::vector<cv::Mat> result =  Postprocess(image);
 
-    return Render(image, result);
+        return Render(image, result);
+    }
+    catch (std::exception& e) {
+        qDebug() << "Failed to Infer! ec: " << e.what() << '\n';
+        return cv::Mat();
+    }
 }
 
 bool FastSAM::ParseArgs()
 {
-    model_input_shape = m_model->input().get_shape();
-    model_output0_shape = m_model->output(0).get_shape();
-    model_output1_shape = m_model->output(1).get_shape();
+    try {
+        model_input_shape = m_model->input().get_shape();
+        model_output0_shape = m_model->output(0).get_shape();
+        model_output1_shape = m_model->output(1).get_shape();
 
-    // [1, 3, 640, 640]
-    input_channel = model_input_shape[1];
-    input_height = model_input_shape[2];
-    input_width = model_input_shape[3];
+        qDebug()  << "xml input shape:" << model_input_shape << "\n";
+        qDebug() << "xml output shape 0:" << model_output0_shape << "\n";
+        qDebug() << "xml output shape 1:" << model_output1_shape << "\n";
 
-    this->input_data.resize(input_channel * input_height * input_height);
+        // [1, 3, 640, 640]
+        input_channel = model_input_shape[1];
+        input_height = model_input_shape[2];
+        input_width = model_input_shape[3];
 
+        this->input_data.resize(input_channel * input_height * input_height);
 
+        qDebug() << "model input height:" << input_height << " input width:" << input_width << "\n";
 
-    // output0 = [1,37,8400]
-    // output1 = [1,32,160,160]
-    mh = model_output1_shape[2];
-    mw = model_output1_shape[3];
+        // output0 = [1,37,8400]
+        // output1 = [1,32,160,160]
+        mh = model_output1_shape[2];
+        mw = model_output1_shape[3];
 
-    return true;
+        qDebug() << "model output mh:" << mh << " output mw:" << mw << "\n";
+
+        return true;
+    }
+    catch(const std::exception& e) {
+        qDebug() << "Failed to Parse Args. "<< e.what() << '\n';
+        return false;
+    }
+
 }
 
 void FastSAM::ScaleBoxes(cv::Mat &box, const cv::Size& oriSize)
@@ -231,12 +254,12 @@ cv::Mat FastSAM::Render(const cv::Mat &image, const std::vector<cv::Mat>& vremat
 ov::Tensor FastSAM::Preprocess(cv::Mat &image)
 {
     if(!ConvertSize(image)) {
-
+        qDebug() << "failed to Convert Size!\n";
         return ov::Tensor();
     }
 
     if(!ConvertLayout(image)) {
-
+        qDebug() << "Failed to Convert Layout!\n";
         return ov::Tensor();
     }
 
@@ -251,7 +274,7 @@ std::vector<cv::Mat> FastSAM::Postprocess(const cv::Mat& oriImage)
     std::vector<cv::Mat> remat = NMS(prediction, 100);
 
     if(remat.size() < 2) {
-
+        qDebug() << "Empty data after nms!\n";
         return std::vector<cv::Mat>();
     }
 
@@ -355,7 +378,7 @@ bool FastSAM::BuildProcessor()
         return false;
     }
 
-
+    qDebug() << "Build successfully!\n";
     return true;
 }
 

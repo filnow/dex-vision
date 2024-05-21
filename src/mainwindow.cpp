@@ -87,6 +87,8 @@ void MainWindow::on_pushButton_clicked()
     file_name = QFileDialog::getOpenFileName(this, "Open a file", imagePath,
                             tr("Image Files (*.png *.jpg *.bmp *.tif);;"));
 
+    image = cv::imread(file_name.toStdString(), cv::IMREAD_COLOR);
+
     // Check if file name empty
     if (file_name != "") {
         // Display image on label
@@ -126,34 +128,37 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
         // Call the getMask function and pass the coordinates and the cv_image
         std::vector<float> input_coordinates = {static_cast<float>(scaledX), static_cast<float>(scaledY)};
 
-        cv::Mat cv_image = cv::imread(file_name.toStdString(), cv::IMREAD_COLOR);
-        cv::Mat masked_image = getMask(cv_image, input_coordinates);
+        cv::Mat masked_image = getMask(image, input_coordinates);
 
         // Display the masked image on the label
-        QImage qimage(masked_image.data, masked_image.cols, masked_image.rows, masked_image.step, QImage::Format_RGB888);
+        QImage qimage(masked_image.data, masked_image.cols, masked_image.rows, masked_image.step, QImage::Format_BGR888);
         ui->label_pic->setPixmap(QPixmap::fromImage(qimage));
     }
 }
-
 
 void MainWindow::on_pushButton_2_clicked()
 {
 
     QDir appDir(QCoreApplication::applicationDirPath());
     appDir.cdUp(); appDir.cdUp();
-    QString modelPath = appDir.filePath("models/FastSAM-s.xml");
+
+    QString modelPath = appDir.filePath("models/FastSAM-x.xml");
 
     if (file_name != "") {
         FastSAM fastsam;
 
-        if(fastsam.Initialize(modelPath.toStdString(), 0.2, 0.3, true)) {
+        if(fastsam.Initialize(modelPath.toStdString(), 0.6, 0.9, true)) {
             cv::Mat mask = fastsam.Infer(file_name.toStdString());
-            QImage qimage(mask.data, mask.cols, mask.rows, mask.step, QImage::Format_RGB888);
+            QImage qimage(mask.data, mask.cols, mask.rows, mask.step, QImage::Format_BGR888);
             ui->label_pic->setPixmap(QPixmap::fromImage(qimage));
-
-
         }
     }
 
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+    ui->label_pic->setPixmap(QPixmap::fromImage(qimage));
 }
 

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <opencv2/core.hpp>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,8 +24,11 @@ private slots:
 
     void on_pushButton_2_clicked();
 
+    void on_pushButton_3_clicked();
+
 private:
     Ui::MainWindow *ui;
     QString file_name;
+    cv::Mat image;
 };
 #endif // MAINWINDOW_H
