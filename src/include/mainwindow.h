@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <opencv2/core.hpp>
+#include "FastSAM.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -30,5 +31,6 @@ private:
     Ui::MainWindow *ui;
     QString file_name;
     cv::Mat image;
+    FastSAM fastsam;
 };
 #endif // MAINWINDOW_H

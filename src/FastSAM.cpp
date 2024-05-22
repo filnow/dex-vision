@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <QDebug>
 
+//code from https://github.com/zhg-SZPT/FastSAM_Awsome_Openvino
 
 cv::Scalar RandomColor()
 {
@@ -41,10 +42,10 @@ bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou,  bo
 }
 
 
-cv::Mat FastSAM::Infer(const std::string &image_path, std::vector<cv::Point2f> cords)
+void FastSAM::Infer(const std::string &image_path, std::vector<cv::Point2f> cords)
 {
     try {
-        cv::Mat image = cv::imread(image_path);
+        image = cv::imread(image_path);
         cv::Mat processedImg = image.clone();
         ov::Tensor input_tensor = Preprocess(processedImg);
 
@@ -53,19 +54,10 @@ cv::Mat FastSAM::Infer(const std::string &image_path, std::vector<cv::Point2f> c
         m_request.set_input_tensor(input_tensor);
         m_request.infer();
 
-        std::vector<cv::Mat> result =  Postprocess(image);
-
-        if (cords.empty()) {
-            return Render(image, result);
-        }
-        else {
-            return RenderSingleMask(image, result, cords);
-        }
-
+        result =  Postprocess(image);
     }
     catch (std::exception& e) {
         qDebug() << "Failed to Infer! ec: " << e.what() << '\n';
-        return cv::Mat();
     }
 }
 
@@ -234,11 +226,11 @@ void FastSAM::xywh2xyxy(cv::Mat &box)
     }
 }
 
-cv::Mat FastSAM::Render(const cv::Mat &image, const std::vector<cv::Mat>& vremat)
+cv::Mat FastSAM::Render()
 {
     cv::Mat rendered = image.clone();
 
-    for (const auto& mask : vremat) {
+    for (const auto& mask : result) {
         auto color = RandomColor();
         for (int y = 0; y < mask.rows; y++) {
             const float *mp = mask.ptr<float>(y);
@@ -257,18 +249,18 @@ cv::Mat FastSAM::Render(const cv::Mat &image, const std::vector<cv::Mat>& vremat
     return rendered;
 }
 
-cv::Mat FastSAM::RenderSingleMask(const cv::Mat &image, const std::vector<cv::Mat>& vremat, std::vector<cv::Point2f> cords)
+cv::Mat FastSAM::RenderSingleMask(std::vector<cv::Point2f> cords)
 {
     cv::Mat rendered = image.clone();
 
-    for (int i = 0; i < vremat.size(); i++) {
+    for (int i = 0; i < result.size(); i++) {
         for (int j = 0; j < cords.size(); j++) {
-            if (vremat[i].at<float>(cords[j].x, cords[j].y) == 1.0) {
+            if (result[i].at<float>(cords[j].x, cords[j].y) == 1.0) {
                 auto color = RandomColor();
-                for (int y = 0; y < vremat[i].rows; y++) {
-                    const float *mp = vremat[i].ptr<float>(y);
+                for (int y = 0; y < result[i].rows; y++) {
+                    const float *mp = result[i].ptr<float>(y);
                     uchar *p = rendered.ptr<uchar>(y);
-                    for (int x = 0; x < vremat[i].cols; x++) {
+                    for (int x = 0; x < result[i].cols; x++) {
                         if (mp[x] == 1.0) { // ??
                             p[0] = cv::saturate_cast<uchar>(p[0] * 0.5 + color[0] * 0.5);
                             p[1] = cv::saturate_cast<uchar>(p[1] * 0.5 + color[1] * 0.5);
@@ -396,8 +388,6 @@ bool FastSAM::BuildProcessor()
     try
     {
         m_ppp = std::make_shared<ov::preprocess::PrePostProcessor>(m_model);
-
-
         m_ppp->input().tensor()
             .set_shape({1, input_channel, input_height, input_width})
             .set_element_type(ov::element::f32)

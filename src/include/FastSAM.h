@@ -11,7 +11,11 @@ public:
     ~FastSAM(){};
 
     bool Initialize(const std::string& xml_path, float conf, float iou, bool useGpu);
-    cv::Mat Infer(const std::string &image_path, std::vector<cv::Point2f> cords = std::vector<cv::Point2f>());
+    void Infer(const std::string &image_path, std::vector<cv::Point2f> cords = std::vector<cv::Point2f>());
+
+    cv::Mat Render();
+    cv::Mat RenderSingleMask(std::vector<cv::Point2f> cords);
+
 
 private:
     std::vector<cv::Mat> Postprocess(const cv::Mat& oriImage);
@@ -25,10 +29,6 @@ private:
     std::vector<cv::Mat> NMS(cv::Mat& prediction, int max_det = 300);
 
     void xywh2xyxy(cv::Mat &box);
-
-private:
-    cv::Mat Render(const cv::Mat& image, const std::vector<cv::Mat>& vremat);
-    cv::Mat RenderSingleMask(const cv::Mat &image, const std::vector<cv::Mat>& vremat, std::vector<cv::Point2f> cords);
 
 private:
     ov::Tensor Preprocess(cv::Mat& image);
@@ -71,4 +71,6 @@ private:
     int mh = 160;
 
     cv::Mat m_image;
+    std::vector<cv::Mat> result;
+    cv::Mat image;
 };
