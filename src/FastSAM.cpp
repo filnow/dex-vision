@@ -253,9 +253,13 @@ cv::Mat FastSAM::RenderSingleMask(std::vector<cv::Point2f> cords)
 {
     cv::Mat rendered = image.clone();
 
+    std::cout << "cords[" << 0 << "].x = " << cords[0].x << std::endl;
+    std::cout << "cords[" << 0 << "].y = " << cords[0].y << std::endl;
+    std::cout << "size of mask" << result[0].size << std::endl;
+
     for (int i = 0; i < result.size(); i++) {
         for (int j = 0; j < cords.size(); j++) {
-            if (result[i].at<float>(cords[j].x, cords[j].y) == 1.0) {
+            if (result[i].at<float>(cords[j].y, cords[j].x) == 1.0) {
                 auto color = RandomColor();
                 for (int y = 0; y < result[i].rows; y++) {
                     const float *mp = result[i].ptr<float>(y);

@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <opencv2/core.hpp>
-#include "FastSAM.h"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -21,16 +21,11 @@ public:
 
 private slots:
     void on_pushButton_clicked();
-    void mousePressEvent(QMouseEvent *event);
-
     void on_pushButton_2_clicked();
-
     void on_pushButton_3_clicked();
 
 private:
     Ui::MainWindow *ui;
-    QString file_name;
-    cv::Mat image;
-    FastSAM fastsam;
 };
+
 #endif // MAINWINDOW_H
