@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <QDebug>
 
-//code from https://github.com/zhg-SZPT/FastSAM_Awsome_Openvino
 
 cv::Scalar RandomColor()
 {
@@ -21,7 +20,6 @@ bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou,  bo
 
     if(!std::filesystem::exists(xml_path))
         return false;
-
 
     m_model = m_core.read_model(xml_path);
 
@@ -231,19 +229,7 @@ cv::Mat FastSAM::Render()
     cv::Mat rendered = image.clone();
 
     for (const auto& mask : result) {
-        auto color = RandomColor();
-        for (int y = 0; y < mask.rows; y++) {
-            const float *mp = mask.ptr<float>(y);
-            uchar *p = rendered.ptr<uchar>(y);
-            for (int x = 0; x < mask.cols; x++) {
-                if (mp[x] == 1.0) { // ??
-                    p[0] = cv::saturate_cast<uchar>(p[0] * 0.5 + color[0] * 0.5);
-                    p[1] = cv::saturate_cast<uchar>(p[1] * 0.5 + color[1] * 0.5);
-                    p[2] = cv::saturate_cast<uchar>(p[2] * 0.5 + color[2] * 0.5);
-                }
-                p += 3;
-            }
-        }
+        ColorMask(mask, rendered);
     }
 
     return rendered;
@@ -253,32 +239,32 @@ cv::Mat FastSAM::RenderSingleMask(std::vector<cv::Point2f> cords)
 {
     cv::Mat rendered = image.clone();
 
-    std::cout << "cords[" << 0 << "].x = " << cords[0].x << std::endl;
-    std::cout << "cords[" << 0 << "].y = " << cords[0].y << std::endl;
-    std::cout << "size of mask" << result[0].size << std::endl;
-
-    for (int i = 0; i < result.size(); i++) {
+    for (const auto& mask: result) {
         for (int j = 0; j < cords.size(); j++) {
-            if (result[i].at<float>(cords[j].y, cords[j].x) == 1.0) {
-                auto color = RandomColor();
-                for (int y = 0; y < result[i].rows; y++) {
-                    const float *mp = result[i].ptr<float>(y);
-                    uchar *p = rendered.ptr<uchar>(y);
-                    for (int x = 0; x < result[i].cols; x++) {
-                        if (mp[x] == 1.0) { // ??
-                            p[0] = cv::saturate_cast<uchar>(p[0] * 0.5 + color[0] * 0.5);
-                            p[1] = cv::saturate_cast<uchar>(p[1] * 0.5 + color[1] * 0.5);
-                            p[2] = cv::saturate_cast<uchar>(p[2] * 0.5 + color[2] * 0.5);
-                        }
-                        p += 3;
-                    }
-                }
+            if (mask.at<float>(cords[j].y, cords[j].x) == 1.0) {
+                ColorMask(mask, rendered);
             }
         }
 
     }
 
     return rendered;
+}
+
+void FastSAM::ColorMask(const cv::Mat& mask, cv::Mat& rendered) {
+    auto color = RandomColor();
+    for (int y = 0; y < mask.rows; y++) {
+        const float* mp = mask.ptr<float>(y);
+        uchar* p = rendered.ptr<uchar>(y);
+        for (int x = 0; x < mask.cols; x++) {
+            if (mp[x] == 1.0) {
+                p[0] = cv::saturate_cast<uchar>(p[0] * 0.5 + color[0] * 0.5);
+                p[1] = cv::saturate_cast<uchar>(p[1] * 0.5 + color[1] * 0.5);
+                p[2] = cv::saturate_cast<uchar>(p[2] * 0.5 + color[2] * 0.5);
+            }
+            p += 3;
+        }
+    }
 }
 
 ov::Tensor FastSAM::Preprocess(cv::Mat &image)

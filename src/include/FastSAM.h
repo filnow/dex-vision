@@ -30,6 +30,8 @@ private:
 
     void xywh2xyxy(cv::Mat &box);
 
+    void ColorMask(const cv::Mat& mask, cv::Mat& rendered);
+
 private:
     ov::Tensor Preprocess(cv::Mat& image);
 
