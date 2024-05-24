@@ -16,10 +16,15 @@ void customLabel::SetImage(QImage image, QString file_name)
     QDir appDir(QCoreApplication::applicationDirPath());
     appDir.cdUp(); appDir.cdUp();
 
-    QString modelPath = appDir.filePath("models/FastSAM-x.xml");
+    QString samPath = appDir.filePath("models/FastSAM-x.xml");
+    QString depthPath = appDir.filePath("models/depth_anything_vits14.xml");
 
-    if(fastsam.Initialize(modelPath.toStdString(), 0.6, 0.9, true)) {
+    if(fastsam.Initialize(samPath.toStdString(), 0.6, 0.9)) {
         fastsam.Infer(file_name.toStdString());
+    }
+
+    if (depth.Initialize(depthPath.toStdString())) {
+        qDebug() << "Depth Anything Init";
     }
 }
 

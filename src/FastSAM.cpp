@@ -1,8 +1,9 @@
-#include "FastSAM.h"
 #include <algorithm>
 #include <filesystem>
-#include <algorithm>
+
 #include <QDebug>
+
+#include "FastSAM.h"
 
 
 cv::Scalar RandomColor()
@@ -13,7 +14,7 @@ cv::Scalar RandomColor()
     return cv::Scalar(b, g, r);
 }
 
-bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou,  bool useGpu)
+bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou)
 {
     m_conf = conf;
     m_iou = iou;
@@ -30,7 +31,7 @@ bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou,  bo
     if(!BuildProcessor())
         return false;
 
-    m_compiled_model = m_core.compile_model(m_model, useGpu && IsGpuAvaliable(m_core) ? "GPU":"CPU");
+    m_compiled_model = m_core.compile_model(m_model, "CPU");
 
     m_request = m_compiled_model.create_infer_request();
 
@@ -396,14 +397,6 @@ bool FastSAM::BuildProcessor()
     return true;
 }
 
-bool FastSAM::IsGpuAvaliable(const ov::Core& core)
-{
-    std::vector<std::string> avaliableDevice = core.get_available_devices();
-
-    auto iter = std::find(avaliableDevice.begin(), avaliableDevice.end(), "GPU");
-
-    return iter != avaliableDevice.end();
-}
 
 
 

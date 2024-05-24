@@ -10,12 +10,11 @@ public:
     FastSAM() {};
     ~FastSAM(){};
 
-    bool Initialize(const std::string& xml_path, float conf, float iou, bool useGpu);
+    bool Initialize(const std::string& xml_path, float conf, float iou);
     void Infer(const std::string &image_path, std::vector<cv::Point2f> cords = std::vector<cv::Point2f>());
 
     cv::Mat Render();
     cv::Mat RenderSingleMask(std::vector<cv::Point2f> cords);
-
 
 private:
     std::vector<cv::Mat> Postprocess(const cv::Mat& oriImage);
@@ -38,12 +37,10 @@ private:
     bool ConvertSize(cv::Mat& image);
     bool ConvertLayout(cv::Mat& image);
 
-    ov::Tensor BuildTensor();
-
-private:
     bool ParseArgs();
     bool BuildProcessor();
-    bool IsGpuAvaliable(const ov::Core& core);
+
+    ov::Tensor BuildTensor();
 
 private:
     std::shared_ptr<ov::Model> m_model;

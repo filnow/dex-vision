@@ -13,6 +13,7 @@
 
 #include <opencv2/core.hpp>
 #include "FastSAM.h"
+#include "depth.h"
 
 
 class customLabel : public QLabel
@@ -22,9 +23,10 @@ class customLabel : public QLabel
 private:
     QImage orginal_img;
     QImage img;
-    FastSAM fastsam;
-
     QRect getTargetRect(QImage img);
+
+    FastSAM fastsam;
+    Depth depth;
 
     void mousePressEvent(QMouseEvent *e) override;
     void paintEvent(QPaintEvent *event) override;
