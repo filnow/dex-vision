@@ -12,7 +12,7 @@
 #include <QMessageBox>
 
 #include <opencv2/core.hpp>
-#include "FastSAM.h"
+#include "fastsam.h"
 #include "depth.h"
 
 
@@ -39,6 +39,7 @@ public:
     void SetImage(QImage image, QString file_name);
     void SetOrginalImage();
     void SegmentAll();
+    void ShowDepth();
 };
 
 #endif // CUSTOMLABEL_H

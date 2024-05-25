@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <opencv2/opencv.hpp>
+
+#include <opencv2/core.hpp>
 #include <openvino/openvino.hpp>
 
 
@@ -11,7 +13,7 @@ public:
     ~FastSAM(){};
 
     bool Initialize(const std::string& xml_path, float conf, float iou);
-    void Infer(const std::string &image_path, std::vector<cv::Point2f> cords = std::vector<cv::Point2f>());
+    void Infer(const std::string &image_path);
 
     cv::Mat Render();
     cv::Mat RenderSingleMask(std::vector<cv::Point2f> cords);
@@ -28,15 +30,12 @@ private:
     std::vector<cv::Mat> NMS(cv::Mat& prediction, int max_det = 300);
 
     void xywh2xyxy(cv::Mat &box);
-
     void ColorMask(const cv::Mat& mask, cv::Mat& rendered);
 
-private:
     ov::Tensor Preprocess(cv::Mat& image);
 
     bool ConvertSize(cv::Mat& image);
     bool ConvertLayout(cv::Mat& image);
-
     bool ParseArgs();
     bool BuildProcessor();
 

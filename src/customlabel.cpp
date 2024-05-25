@@ -17,15 +17,23 @@ void customLabel::SetImage(QImage image, QString file_name)
     appDir.cdUp(); appDir.cdUp();
 
     QString samPath = appDir.filePath("models/FastSAM-x.xml");
-    QString depthPath = appDir.filePath("models/depth_anything_vits14.xml");
+    QString depthPath = appDir.filePath("models/depth_anything_vitb14.xml");
 
     if(fastsam.Initialize(samPath.toStdString(), 0.6, 0.9)) {
         fastsam.Infer(file_name.toStdString());
     }
 
     if (depth.Initialize(depthPath.toStdString())) {
-        qDebug() << "Depth Anything Init";
+        depth.Infer(file_name.toStdString());
     }
+}
+
+void customLabel::ShowDepth()
+{
+    cv::Mat depth_map = depth.RenderDepth();
+    QImage qimage(depth_map.data, depth_map.cols, depth_map.rows, depth_map.step, QImage::Format_BGR888);
+    img = qimage;
+    repaint();
 }
 
 void customLabel::SetOrginalImage()

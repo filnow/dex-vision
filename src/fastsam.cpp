@@ -3,7 +3,7 @@
 
 #include <QDebug>
 
-#include "FastSAM.h"
+#include "fastsam.h"
 
 
 cv::Scalar RandomColor()
@@ -41,7 +41,7 @@ bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou)
 }
 
 
-void FastSAM::Infer(const std::string &image_path, std::vector<cv::Point2f> cords)
+void FastSAM::Infer(const std::string &image_path)
 {
     try {
         image = cv::imread(image_path);

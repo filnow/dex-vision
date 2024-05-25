@@ -52,4 +52,8 @@ void MainWindow::on_pushButton_3_clicked()
     this->ui->label_pic->SetOrginalImage();
 }
 
+void MainWindow::on_pushButton_4_clicked()
+{
+    this->ui->label_pic->ShowDepth();
+}
 
