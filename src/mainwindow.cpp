@@ -33,7 +33,7 @@ void MainWindow::on_pushButton_clicked()
 
     QString imagePath = appDir.absolutePath() + "/images";
 
-    QString file_name = QFileDialog::getOpenFileName(this, "Open a file", imagePath,
+    file_name = QFileDialog::getOpenFileName(this, "Open a file", imagePath,
                             tr("Image Files (*.png *.jpg *.bmp *.tif);;"));
 
     if (file_name != "") {
@@ -55,5 +55,10 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::on_pushButton_4_clicked()
 {
     this->ui->label_pic->ShowDepth();
+}
+
+void MainWindow::on_pushButton_5_clicked()
+{
+    this->ui->label_pic->ScanImage(file_name);
 }
 

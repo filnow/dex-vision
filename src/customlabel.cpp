@@ -30,10 +30,51 @@ void customLabel::SetImage(QImage image, QString file_name)
 
 void customLabel::ShowDepth()
 {
-    cv::Mat depth_map = depth.RenderDepth();
+    depth_map = depth.RenderDepth();
     QImage qimage(depth_map.data, depth_map.cols, depth_map.rows, depth_map.step, QImage::Format_BGR888);
     img = qimage;
     repaint();
+}
+
+void customLabel::ScanImage(QString file_name)
+{
+    depth_map = depth.RenderDepth();
+
+    cv::Mat gray_depth;
+    cv::cvtColor(depth_map, gray_depth, cv::COLOR_BGR2GRAY);
+
+    cv::Mat th;
+    cv::threshold(gray_depth, th, 127, 255, cv::THRESH_BINARY);
+
+    cv::Mat kernel = cv::Mat::ones(15, 15, CV_8U);
+
+    cv::Mat dilate;
+    cv::morphologyEx(th, dilate, cv::MORPH_CLOSE, kernel, cv::Point(-1,-1), 3);
+
+    std::vector<std::vector<cv::Point>> contours;
+    std::vector<cv::Vec4i> hierarchy;
+    cv::findContours(dilate, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+
+    cv::Mat img1 = cv::imread(file_name.toStdString(), cv::IMREAD_COLOR);
+
+    for (int z = 0; z < 256;  ++z) {
+        cv::Mat frame = img1.clone();
+
+        cv::drawContours(frame, contours, -1, cv::Scalar(0, 255, 0), 3);
+
+        cv::Mat plane_mask = cv::Mat::zeros(gray_depth.size(), CV_8UC1);
+        plane_mask.setTo(255, gray_depth <= z);
+
+        cv::Mat plane_color;
+        cv::cvtColor(plane_mask, plane_color, cv::COLOR_GRAY2BGR);
+        cv::addWeighted(frame, 1.0, plane_color, 0.5, 0, frame);
+
+        QImage qimage(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_BGR888);
+        img = qimage;
+        repaint();
+
+        cv::waitKey(10);
+    }
 }
 
 void customLabel::SetOrginalImage()

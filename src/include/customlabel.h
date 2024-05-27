@@ -23,6 +23,7 @@ class customLabel : public QLabel
 private:
     QImage orginal_img;
     QImage img;
+    cv::Mat depth_map;
     QRect getTargetRect(QImage img);
 
     FastSAM fastsam;
@@ -40,6 +41,7 @@ public:
     void SetOrginalImage();
     void SegmentAll();
     void ShowDepth();
+    void ScanImage(QString file_name);
 };
 
 #endif // CUSTOMLABEL_H
