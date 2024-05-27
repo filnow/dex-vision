@@ -57,10 +57,13 @@ void customLabel::ScanImage(QString file_name)
 
     cv::Mat img1 = cv::imread(file_name.toStdString(), cv::IMREAD_COLOR);
 
+    int x = contours[0][0].x;
+    int y = contours[0][0].y;
+
     for (int z = 0; z < 256;  ++z) {
         cv::Mat frame = img1.clone();
 
-        cv::drawContours(frame, contours, -1, cv::Scalar(0, 255, 0), 3);
+        //cv::drawContours(frame, contours, -1, cv::Scalar(0, 255, 0), 3);
 
         cv::Mat plane_mask = cv::Mat::zeros(gray_depth.size(), CV_8UC1);
         plane_mask.setTo(255, gray_depth <= z);
@@ -72,6 +75,11 @@ void customLabel::ScanImage(QString file_name)
         QImage qimage(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_BGR888);
         img = qimage;
         repaint();
+
+        if ((z == gray_depth.at<uchar>(y, x)) != 0)
+        {
+            break;
+        }
 
         cv::waitKey(10);
     }
