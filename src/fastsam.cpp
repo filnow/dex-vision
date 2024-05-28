@@ -41,7 +41,7 @@ bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou)
 }
 
 
-void FastSAM::Infer(const std::string &image_path)
+std::vector<cv::Mat> FastSAM::Infer(const std::string &image_path)
 {
     try {
         image = cv::imread(image_path);
@@ -58,6 +58,8 @@ void FastSAM::Infer(const std::string &image_path)
     catch (std::exception& e) {
         qDebug() << "Failed to Infer! ec: " << e.what() << '\n';
     }
+
+    return result;
 }
 
 bool FastSAM::ParseArgs()
@@ -236,20 +238,22 @@ cv::Mat FastSAM::Render()
     return rendered;
 }
 
-cv::Mat FastSAM::RenderSingleMask(std::vector<cv::Point2f> cords)
+std::tuple<cv::Mat, cv::Mat> FastSAM::RenderSingleMask(std::vector<cv::Point2f> cords)
 {
+    cv::Mat clicked_mask;
     cv::Mat rendered = image.clone();
 
     for (const auto& mask: result) {
         for (int j = 0; j < cords.size(); j++) {
             if (mask.at<float>(cords[j].y, cords[j].x) == 1.0) {
+                clicked_mask = mask;
                 ColorMask(mask, rendered);
             }
         }
 
     }
 
-    return rendered;
+    return std::make_tuple(rendered, clicked_mask);
 }
 
 void FastSAM::ColorMask(const cv::Mat& mask, cv::Mat& rendered) {

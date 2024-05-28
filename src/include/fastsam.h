@@ -13,10 +13,10 @@ public:
     ~FastSAM(){};
 
     bool Initialize(const std::string& xml_path, float conf, float iou);
-    void Infer(const std::string &image_path);
+    std::vector<cv::Mat> Infer(const std::string &image_path);
 
     cv::Mat Render();
-    cv::Mat RenderSingleMask(std::vector<cv::Point2f> cords);
+    std::tuple<cv::Mat, cv::Mat> RenderSingleMask(std::vector<cv::Point2f> cords);
 
 private:
     std::vector<cv::Mat> Postprocess(const cv::Mat& oriImage);

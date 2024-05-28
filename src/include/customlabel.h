@@ -23,11 +23,16 @@ class customLabel : public QLabel
 private:
     QImage orginal_img;
     QImage img;
+    cv::Mat cv_img;
     cv::Mat depth_map;
     QRect getTargetRect(QImage img);
 
     FastSAM fastsam;
     Depth depth;
+
+    std::vector<cv::Mat> fastsam_results;
+    cv::Mat clicked_mask;
+    cv::Mat image_with_masks;
 
     void mousePressEvent(QMouseEvent *e) override;
     void paintEvent(QPaintEvent *event) override;
@@ -41,7 +46,8 @@ public:
     void SetOrginalImage();
     void SegmentAll();
     void ShowDepth();
-    void ScanImage(QString file_name);
+    void ScanImage();
+    void RemoveBackground();
 };
 
 #endif // CUSTOMLABEL_H

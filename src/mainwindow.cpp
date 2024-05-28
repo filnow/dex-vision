@@ -59,6 +59,12 @@ void MainWindow::on_pushButton_4_clicked()
 
 void MainWindow::on_pushButton_5_clicked()
 {
-    this->ui->label_pic->ScanImage(file_name);
+    this->ui->label_pic->ScanImage();
+}
+
+
+void MainWindow::on_pushButton_6_clicked()
+{
+    this->ui->label_pic->RemoveBackground();
 }
 

@@ -25,6 +25,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_6">
+        <property name="text">
+         <string>Remove BG</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_5">
         <property name="text">
          <string>Scanner</string>
