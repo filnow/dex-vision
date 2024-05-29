@@ -20,6 +20,18 @@ class customLabel : public QLabel
 {
     Q_OBJECT
 
+public:
+    customLabel(QWidget *parent = nullptr);
+
+    static QPoint getTransformedPoint(QSize window, QSize img, QPoint pt, bool isSourcePoint);
+
+    void SetImage(QImage image, QString file_name);
+    void SetOrginalImage();
+    void SegmentAll();
+    void ShowDepth();
+    void ScanImage();
+    void RemoveBackground();
+
 private:
     QImage orginal_img;
     QImage img;
@@ -33,21 +45,14 @@ private:
     std::vector<cv::Mat> fastsam_results;
     cv::Mat clicked_mask;
     cv::Mat image_with_masks;
+    std::vector<cv::Point2f> cords;
 
+private:
     void mousePressEvent(QMouseEvent *e) override;
     void paintEvent(QPaintEvent *event) override;
 
-public:
-    customLabel(QWidget *parent = nullptr);
+    std::vector<std::vector<cv::Point>> drawLine(cv::Mat mask, cv::Mat image, int line_size, bool draw);
 
-    static QPoint getTransformedPoint(QSize window, QSize img, QPoint pt, bool isSourcePoint);
-
-    void SetImage(QImage image, QString file_name);
-    void SetOrginalImage();
-    void SegmentAll();
-    void ShowDepth();
-    void ScanImage();
-    void RemoveBackground();
 };
 
 #endif // CUSTOMLABEL_H

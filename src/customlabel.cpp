@@ -39,11 +39,13 @@ void customLabel::ShowDepth()
 }
 
 
-std::vector<std::vector<cv::Point>> drawLine(cv::Mat mask, cv::Mat image, int line_size, bool draw)
+std::vector<std::vector<cv::Point>> customLabel::drawLine(cv::Mat mask, cv::Mat image, int line_size, bool draw)
 {
-    std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy;
+    std::vector<std::vector<cv::Point>> contours;
+
     cv::findContours(mask, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+
     if (draw == true)
     {
         cv::drawContours(image, contours, -1, cv::Scalar(0, 255, 43), line_size, cv::LINE_AA, hierarchy, 0);
@@ -73,7 +75,7 @@ void customLabel::RemoveBackground()
 
         cv::Mat plane_mask = cv::Mat::zeros(gray_depth_mask.size(), CV_8UC1);
         plane_mask.setTo(255, gray_depth_mask <= z);
-;
+
         cv::Mat plane_color;
         cv::cvtColor(plane_mask, plane_color, cv::COLOR_GRAY2BGR);
         cv::addWeighted(frame, 1.0, plane_color, 1, 0, frame);
@@ -86,6 +88,7 @@ void customLabel::RemoveBackground()
     }
 }
 
+
 void customLabel::ScanImage()
 {
     cv::Mat gray_depth;
@@ -95,28 +98,32 @@ void customLabel::ScanImage()
         cv::Mat frame = cv_img.clone();
 
         cv::Mat plane_mask = cv::Mat::zeros(gray_depth.size(), CV_8UC1);
-        plane_mask.setTo(255, gray_depth <= z);
+        plane_mask.setTo(255, gray_depth == z);
 
-        std::vector<std::vector<cv::Point>> lines = drawLine(plane_mask, frame, 5, true);
+        std::vector<std::vector<cv::Point>> lines = drawLine(plane_mask, frame, 3, true);
 
         QImage qimage(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_BGR888);
         img = qimage;
         repaint();
 
-        if (z >= 100)
+        if (z >= 50)
         {
-            cv::waitKey(5);
+            cv::waitKey(4);
         }
         else
         {
             cv::waitKey(8);
         }
     }
+
+    img = orginal_img;
+    repaint();
 }
 
 void customLabel::SetOrginalImage()
 {
     img = orginal_img;
+    cords.clear();
     repaint();
 }
 
@@ -137,7 +144,6 @@ void customLabel::mousePressEvent(QMouseEvent *e)
     {
         QPoint qcords = getTransformedPoint(this->size(), img.size(), e->pos(), true);
 
-        std::vector<cv::Point2f> cords;
         cords.push_back(cv::Point2f(qcords.x(), qcords.y()));
 
         std::tie(image_with_masks, clicked_mask) = fastsam.RenderSingleMask(cords);

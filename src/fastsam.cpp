@@ -240,13 +240,14 @@ cv::Mat FastSAM::Render()
 
 std::tuple<cv::Mat, cv::Mat> FastSAM::RenderSingleMask(std::vector<cv::Point2f> cords)
 {
-    cv::Mat clicked_mask;
     cv::Mat rendered = image.clone();
+    cv::Mat clicked_mask;
 
     for (const auto& mask: result) {
         for (int j = 0; j < cords.size(); j++) {
             if (mask.at<float>(cords[j].y, cords[j].x) == 1.0) {
-                clicked_mask = mask;
+                clicked_mask = mask; //NOTE: this should be new cv::Mat that connect masks using setTO
+                //NOTE: dont color mask when its already colored
                 ColorMask(mask, rendered);
             }
         }
