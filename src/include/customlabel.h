@@ -31,6 +31,7 @@ public:
     void ShowDepth();
     void ScanImage();
     void RemoveBackground();
+    void ModelInit();
     QImage SaveImage();
 
 signals:
@@ -51,6 +52,9 @@ private:
     cv::Mat clicked_mask;
     cv::Mat image_with_masks;
     std::vector<cv::Point2f> cords;
+
+    bool sam_init = false;
+    bool depth_init = false;
 
 private:
     void mousePressEvent(QMouseEvent *e) override;

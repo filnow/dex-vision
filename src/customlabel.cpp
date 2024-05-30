@@ -9,25 +9,40 @@ customLabel::customLabel(QWidget *parent) : QLabel(parent)
 {
 }
 
+void customLabel::ModelInit()
+{
+    QDir appDir(QCoreApplication::applicationDirPath());
+    appDir.cdUp(); appDir.cdUp();
+    QString samPath = appDir.filePath("models/FastSAM-x.xml");
+    QString depthPath = appDir.filePath("models/depth_anything_vitb14.xml");
+
+    if (fastsam.Initialize(samPath.toStdString(), 0.6, 0.9)) {
+        sam_init = true;
+    }
+
+    if (depth.Initialize(depthPath.toStdString())) {
+        depth_init = true;
+    }
+}
+
 void customLabel::SetImage(QImage image, QString file_name)
 {
-    auto processingFunction = [this, file_name, image]() {
-        img = QImage();
-        repaint();
+    emit processingStarted();
 
-        cv_img = cv::imread(file_name.toStdString(), cv::IMREAD_COLOR);
+    img = QImage();
+    cords.clear();
+    repaint();
 
-        QDir appDir(QCoreApplication::applicationDirPath());
-        appDir.cdUp(); appDir.cdUp();
+    cv_img = cv::imread(file_name.toStdString(), cv::IMREAD_COLOR);
 
-        QString samPath = appDir.filePath("models/FastSAM-x.xml");
-        QString depthPath = appDir.filePath("models/depth_anything_vitb14.xml");
-
-        if(fastsam.Initialize(samPath.toStdString(), 0.6, 0.9)) {
+    auto fastsamInitFunction = [this, file_name, image]() {
+        if (sam_init) {
             fastsam_results = fastsam.Infer(file_name.toStdString());
         }
+    };
 
-        if (depth.Initialize(depthPath.toStdString())) {
+    auto depthInitFunction = [this, file_name, image]() {
+        if (depth_init) {
             depth.Infer(file_name.toStdString());
             depth_map = depth.RenderDepth();
         }
@@ -35,21 +50,26 @@ void customLabel::SetImage(QImage image, QString file_name)
         orginal_img = image;
         img = image;
         repaint();
+
+        emit processingFinished();
     };
 
-    QFuture<void> future = QtConcurrent::run(processingFunction);
-    QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
+    QFuture<void> fastsamFuture = QtConcurrent::run(fastsamInitFunction);
+    QFuture<void> depthFuture = QtConcurrent::run(depthInitFunction);
 
-    connect(watcher, &QFutureWatcher<void>::finished, this, [this, watcher]() {
-        // Update the status bar to clear the "PROCESSING IMG" message
-        emit processingFinished();
-        watcher->deleteLater();
+    QFutureWatcher<void> *fastsamWatcher = new QFutureWatcher<void>();
+    QFutureWatcher<void> *depthWatcher = new QFutureWatcher<void>();
+
+    connect(fastsamWatcher, &QFutureWatcher<void>::finished, this, [this, fastsamWatcher]() {
+        fastsamWatcher->deleteLater();
     });
 
-    connect(watcher, &QFutureWatcher<void>::finished, watcher, &QFutureWatcher<void>::deleteLater);
+    connect(depthWatcher, &QFutureWatcher<void>::finished, this, [this, depthWatcher, image]() {
+        depthWatcher->deleteLater();
+    });
 
-    watcher->setFuture(future);
-    emit processingStarted();
+    fastsamWatcher->setFuture(fastsamFuture);
+    depthWatcher->setFuture(depthFuture);
 }
 
 QImage customLabel::SaveImage()
@@ -132,14 +152,7 @@ void customLabel::ScanImage()
         img = qimage;
         repaint();
 
-        if (z >= 50)
-        {
-            cv::waitKey(4);
-        }
-        else
-        {
-            cv::waitKey(8);
-        }
+        cv::waitKey(8);
     }
 
     img = orginal_img;
