@@ -183,7 +183,11 @@ void customLabel::mousePressEvent(QMouseEvent *e)
     {
         QPoint qcords = getTransformedPoint(this->size(), img.size(), e->pos(), true);
 
-        cords.push_back(cv::Point2f(qcords.x(), qcords.y()));
+        if (std::find(cords.begin(), cords.end(), cv::Point2f(qcords.x(), qcords.y())) == cords.end()) {
+            cords.push_back(cv::Point2f(qcords.x(), qcords.y()));
+        } else {
+            cords.erase(std::remove(cords.begin(), cords.end(), cv::Point2f(qcords.x(), qcords.y())), cords.end());
+        }
 
         std::tie(image_with_masks, clicked_mask) = fastsam.RenderSingleMask(cords);
 

@@ -240,15 +240,16 @@ cv::Mat FastSAM::Render()
 
 std::tuple<cv::Mat, cv::Mat> FastSAM::RenderSingleMask(std::vector<cv::Point2f> cords)
 {
-    cv::Mat rendered = image.clone();
     cv::Mat clicked_mask;
+    cv::Mat rendered = image.clone();
+    cv::Mat all_clicked_masks = cv::Mat::zeros(result[0].size(), result[0].type());
 
     for (const auto& mask: result) {
         for (int j = 0; j < cords.size(); j++) {
-            if (mask.at<float>(cords[j].y, cords[j].x) == 1.0) {
-                clicked_mask = mask; //NOTE: this should be new cv::Mat that connect masks using setTO
-                //NOTE: dont color mask when its already colored
-                ColorMask(mask, rendered);
+            if (mask.at<float>(cords[j].y, cords[j].x) == 1.0 && all_clicked_masks.at<float>(cords[j].y, cords[j].x) != 1.0) {
+                all_clicked_masks.setTo(1.0, mask == 1.0);
+                clicked_mask = all_clicked_masks;
+                ColorMask(mask, rendered, false);
             }
         }
 
@@ -257,8 +258,12 @@ std::tuple<cv::Mat, cv::Mat> FastSAM::RenderSingleMask(std::vector<cv::Point2f> 
     return std::make_tuple(rendered, clicked_mask);
 }
 
-void FastSAM::ColorMask(const cv::Mat& mask, cv::Mat& rendered) {
-    auto color = RandomColor();
+void FastSAM::ColorMask(const cv::Mat& mask, cv::Mat& rendered, bool multi_color) {
+    cv::Scalar color;
+
+    if (multi_color) { color = RandomColor(); }
+    else { color = cv::Scalar(255, 255, 250); }
+
     for (int y = 0; y < mask.rows; y++) {
         const float* mp = mask.ptr<float>(y);
         uchar* p = rendered.ptr<uchar>(y);

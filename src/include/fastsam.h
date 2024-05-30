@@ -30,7 +30,7 @@ private:
     std::vector<cv::Mat> NMS(cv::Mat& prediction, int max_det = 300);
 
     void xywh2xyxy(cv::Mat &box);
-    void ColorMask(const cv::Mat& mask, cv::Mat& rendered);
+    void ColorMask(const cv::Mat& mask, cv::Mat& rendered, bool multi_color=true);
 
     ov::Tensor Preprocess(cv::Mat& image);
 
