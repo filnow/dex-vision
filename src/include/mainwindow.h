@@ -20,15 +20,21 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_pushButton_clicked();
-    void on_pushButton_2_clicked();
-    void on_pushButton_3_clicked();
+    QDialog* make_gif_dialog(QString path_to_gif);
 
-    void on_pushButton_4_clicked();
+    void on_actionLoad_triggered();
 
-    void on_pushButton_5_clicked();
+    void on_actionSave_triggered();
 
-    void on_pushButton_6_clicked();
+    void on_actionSegment_All_triggered();
+
+    void on_actionRemove_Background_triggered();
+
+    void on_actionDepth_triggered();
+
+    void on_actionScanner_triggered();
+
+    void on_actionClear_triggered();
 
 private:
     Ui::MainWindow *ui;

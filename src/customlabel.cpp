@@ -1,4 +1,8 @@
 #include "customlabel.h"
+#include "QFileDialog"
+#include <QtConcurrent/QtConcurrent>
+#include <QFuture>
+#include <QFutureWatcher>
 
 
 customLabel::customLabel(QWidget *parent) : QLabel(parent)
@@ -7,28 +11,50 @@ customLabel::customLabel(QWidget *parent) : QLabel(parent)
 
 void customLabel::SetImage(QImage image, QString file_name)
 {
-    orginal_img = image;
-    img = image;
-    repaint();
+    auto processingFunction = [this, file_name, image]() {
+        img = QImage();
+        repaint();
 
-    cv_img = cv::imread(file_name.toStdString(), cv::IMREAD_COLOR);
+        cv_img = cv::imread(file_name.toStdString(), cv::IMREAD_COLOR);
 
-    QMessageBox::information(this, "Displayed image from path:", file_name);
+        QDir appDir(QCoreApplication::applicationDirPath());
+        appDir.cdUp(); appDir.cdUp();
 
-    QDir appDir(QCoreApplication::applicationDirPath());
-    appDir.cdUp(); appDir.cdUp();
+        QString samPath = appDir.filePath("models/FastSAM-x.xml");
+        QString depthPath = appDir.filePath("models/depth_anything_vitb14.xml");
 
-    QString samPath = appDir.filePath("models/FastSAM-x.xml");
-    QString depthPath = appDir.filePath("models/depth_anything_vitb14.xml");
+        if(fastsam.Initialize(samPath.toStdString(), 0.6, 0.9)) {
+            fastsam_results = fastsam.Infer(file_name.toStdString());
+        }
 
-    if(fastsam.Initialize(samPath.toStdString(), 0.6, 0.9)) {
-        fastsam_results = fastsam.Infer(file_name.toStdString());
-    }
+        if (depth.Initialize(depthPath.toStdString())) {
+            depth.Infer(file_name.toStdString());
+            depth_map = depth.RenderDepth();
+        }
 
-    if (depth.Initialize(depthPath.toStdString())) {
-        depth.Infer(file_name.toStdString());
-        depth_map = depth.RenderDepth();
-    }
+        orginal_img = image;
+        img = image;
+        repaint();
+    };
+
+    QFuture<void> future = QtConcurrent::run(processingFunction);
+    QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
+
+    connect(watcher, &QFutureWatcher<void>::finished, this, [this, watcher]() {
+        // Update the status bar to clear the "PROCESSING IMG" message
+        emit processingFinished();
+        watcher->deleteLater();
+    });
+
+    connect(watcher, &QFutureWatcher<void>::finished, watcher, &QFutureWatcher<void>::deleteLater);
+
+    watcher->setFuture(future);
+    emit processingStarted();
+}
+
+QImage customLabel::SaveImage()
+{
+    return img;
 }
 
 void customLabel::ShowDepth()

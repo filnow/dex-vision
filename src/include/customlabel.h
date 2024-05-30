@@ -31,6 +31,11 @@ public:
     void ShowDepth();
     void ScanImage();
     void RemoveBackground();
+    QImage SaveImage();
+
+signals:
+    void processingStarted();
+    void processingFinished();
 
 private:
     QImage orginal_img;
