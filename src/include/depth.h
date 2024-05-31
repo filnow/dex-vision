@@ -1,51 +1,55 @@
 #ifndef DEPTH_H
 #define DEPTH_H
 
+#include "ovload.h"
 #include <opencv2/opencv.hpp>
 #include <openvino/openvino.hpp>
 
 
-class Depth
+class Depth : public OVload
 {
 public:
-    Depth() {};
-    ~Depth(){};
+    Depth() : OVload() {};
+    ~Depth() {};
 
-    bool Initialize(const std::string& xml_path);
-    void Infer(const std::string &image_path);
+    bool Initialize(const std::string& xml_path, int input_number, int output_number) {
+        return OVload::Initialize(xml_path, input_number, output_number);
+    }
 
-    cv::Mat RenderDepth();
+    void Infer(const std::string &image_path) {
+        OVload::Infer(image_path);
+    }
 
-private:
-    bool ParseArgs();
-    bool BuildProcessor();
-    bool ConvertLayout(cv::Mat& image);
+    cv::Mat RenderDepth() {
+        return Render();
+    }
 
-    ov::Tensor Preprocess(cv::Mat& image);
-    std::vector<cv::Mat> Postprocess(const cv::Mat& oriImage);
+protected:
+    ov::Tensor Preprocess(cv::Mat& image) override {
+        cv::resize(image, image, cv::Size(518, 518));
 
-    cv::Mat BuildOutput();
-    ov::Tensor BuildTensor();
+        if(!ConvertLayout(image)) {
+            return ov::Tensor();
+        }
+        return BuildTensor();
+    }
 
-private:
-    ov::Core m_core;
-    ov::CompiledModel m_compiled_model;
-    ov::InferRequest m_request;
-    ov::Shape model_input_shape;
-    ov::Shape model_output_shape;
+    std::vector<cv::Mat> Postprocess(cv::Mat& image) override {
+        auto output = BuildOutput();
+        cv::Mat depth = output[0];
+        cv::resize(depth, depth, cv::Size(image.cols, image.rows));
 
-    std::shared_ptr<ov::preprocess::PrePostProcessor> m_ppp;
-    std::shared_ptr<ov::Model> m_model;
-    std::vector<float> input_data;
-    cv::Mat result;
+        double minVal, maxVal;
+        cv::minMaxLoc(depth, &minVal, &maxVal);
 
-    cv::Mat image;
+        depth = (depth - minVal) / (maxVal - minVal) * 255.0;
+        depth.convertTo(depth, CV_8U);
 
-    int input_width = 0;
-    int input_height = 0;
-    int input_channel = 3;
-    int mw = 518;
-    int mh = 518;
+        cv::Mat depth_color;
+        cv::applyColorMap(depth, depth_color, cv::COLORMAP_INFERNO);
+
+        return {depth_color};
+    }
 };
 
 #endif // DEPTH_H

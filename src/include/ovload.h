@@ -14,33 +14,36 @@ public:
     OVload();
 
     cv::Mat Render();
+    std::vector<cv::Mat> GetResult();
 
-    bool Initialize(const std::string& xml_path, float conf, float iou);
     void Infer(const std::string &image_path);
+    bool Initialize(const std::string &xml_path, int input_number, int output_number);
 
-private:
-    cv::Mat BuildOutput();
-
+protected:
     ov::Tensor BuildTensor();
-    ov::Tensor Preprocess(cv::Mat& image);
+
+    std::vector<cv::Mat> BuildOutput();
+
+    virtual ov::Tensor Preprocess(cv::Mat &image) = 0;
+    virtual std::vector<cv::Mat> Postprocess(cv::Mat &image) = 0;
 
     bool ConvertSize(cv::Mat& image);
     bool ConvertLayout(cv::Mat& image);
-    bool ParseArgs();
+    bool ParseArgs(int input_number, int output_number);
     bool BuildProcessor();
 
-private:
-    cv::Mat result;
+protected:
     cv::Mat image;
+    std::vector<cv::Mat> result;
 
     ov::Core m_core;
     ov::InferRequest m_request;
-    ov::Shape model_input_shape;
-    ov::Shape model_output_shape;
     ov::CompiledModel m_compiled_model;
 
     std::vector<float> input_data;
     std::shared_ptr<ov::Model> m_model;
+    std::vector<ov::Shape> model_input_shape;
+    std::vector<ov::Shape> model_output_shape;
     std::shared_ptr<ov::preprocess::PrePostProcessor> m_ppp;
 
     int mw = 160;

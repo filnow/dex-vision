@@ -37,7 +37,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         src/include/fastsam.h src/fastsam.cpp
         src/include/customlabel.h src/customlabel.cpp
-        src/include/depth.h src/depth.cpp
+        src/include/depth.h
         src/include/ovload.h src/ovload.cpp
 
         resources/resources.qrc

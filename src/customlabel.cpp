@@ -20,7 +20,7 @@ void customLabel::ModelInit()
         sam_init = true;
     }
 
-    if (depth.Initialize(depthPath.toStdString())) {
+    if (depth.Initialize(depthPath.toStdString(), 1, 1)) {
         depth_init = true;
     }
 }
@@ -38,13 +38,14 @@ void customLabel::SetImage(QImage image, QString file_name)
     auto fastsamInitFunction = [this, file_name, image]() {
         if (sam_init) {
             fastsam_results = fastsam.Infer(file_name.toStdString());
+            clicked_mask = cv::Mat::zeros(fastsam_results[0].size(), fastsam_results[0].type());
         }
     };
 
     auto depthInitFunction = [this, file_name, image]() {
         if (depth_init) {
             depth.Infer(file_name.toStdString());
-            depth_map = depth.RenderDepth();
+            depth_map = depth.GetResult()[0];
         }
 
         orginal_img = image;
