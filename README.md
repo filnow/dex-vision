@@ -6,19 +6,12 @@ Motivated by [dingboard](https://dingboard.com/) from [yacine](https://yacine.ca
 
 ## Progress
 
-Right now the app is capable of:
+![Alt text](utils/demo.mp4)
 
-    - Loading image
-    - Making full segmentation with FastSAM
-    - Segmenting object on click with FastSAM
-    - Fancy remove background
-    - Depth map with DepthAnything
-    - 3D scanning effect on 2D image using depth map
 
 Things to add:
 
     - Inpainting with Lama
-    - Saving images
     - Image upscaling
     - Drag and drop
     - Drag and draw box then segmentation 
@@ -27,10 +20,6 @@ Things to add:
     - Multiple clicked masks
     - Different rotation like mirror and stuff
     - Loading multiple images
-
-## Demo
-
-![Alt text](utils/demo.gif)
 
 
 
