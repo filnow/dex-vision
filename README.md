@@ -6,8 +6,7 @@ Motivated by [dingboard](https://dingboard.com/) from [yacine](https://yacine.ca
 
 ## Progress
 
-![Alt text](utils/demo.mp4)
-
+https://github.com/filnow/dex-vision/assets/71509466/1451da0c-d656-4531-9404-9eb41d1680f8
 
 Things to add:
 
