@@ -60,8 +60,10 @@ private:
     void mousePressEvent(QMouseEvent *e) override;
     void paintEvent(QPaintEvent *event) override;
 
-    std::vector<std::vector<cv::Point>> drawLine(cv::Mat mask, cv::Mat image, int line_size, bool draw);
+    void ColorMask(const cv::Mat& mask, cv::Mat& rendered, bool multi_color=true);
 
+    cv::Scalar RandomColor();
+    std::vector<std::vector<cv::Point>> drawLine(cv::Mat mask, cv::Mat image, int line_size, bool draw);
 };
 
 #endif // CUSTOMLABEL_H

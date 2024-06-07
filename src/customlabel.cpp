@@ -9,6 +9,7 @@ customLabel::customLabel(QWidget *parent) : QLabel(parent)
 {
 }
 
+
 void customLabel::ModelInit()
 {
     QDir appDir(QCoreApplication::applicationDirPath());
@@ -25,6 +26,7 @@ void customLabel::ModelInit()
     }
 }
 
+
 void customLabel::SetImage(QImage image, QString file_name)
 {
     emit processingStarted();
@@ -37,7 +39,8 @@ void customLabel::SetImage(QImage image, QString file_name)
 
     auto fastsamInitFunction = [this, file_name, image]() {
         if (sam_init) {
-            fastsam_results = fastsam.Infer(file_name.toStdString());
+            fastsam.Infer(file_name.toStdString());
+            fastsam_results = fastsam.GetResult();
             clicked_mask = cv::Mat::zeros(fastsam_results[0].size(), fastsam_results[0].type());
         }
     };
@@ -73,10 +76,12 @@ void customLabel::SetImage(QImage image, QString file_name)
     depthWatcher->setFuture(depthFuture);
 }
 
+
 QImage customLabel::SaveImage()
 {
     return img;
 }
+
 
 void customLabel::ShowDepth()
 {
@@ -100,6 +105,7 @@ std::vector<std::vector<cv::Point>> customLabel::drawLine(cv::Mat mask, cv::Mat 
 
     return contours;
 }
+
 
 void customLabel::RemoveBackground()
 {
@@ -160,6 +166,7 @@ void customLabel::ScanImage()
     repaint();
 }
 
+
 void customLabel::SetOrginalImage()
 {
     img = orginal_img;
@@ -167,16 +174,26 @@ void customLabel::SetOrginalImage()
     repaint();
 }
 
+
 void customLabel::SegmentAll()
 {
-    cv::Mat mask = fastsam.Render();
-    QImage qimage(mask.data, mask.cols, mask.rows, mask.step, QImage::Format_BGR888);
+    cv::Mat rendered = cv_img.clone();
+
+    for (const auto& mask : fastsam_results) {
+        ColorMask(mask, rendered);
+    }
+
+    QImage qimage(rendered.data, rendered.cols, rendered.rows, rendered.step, QImage::Format_BGR888);
     img = qimage;
     repaint();
 }
 
+
 void customLabel::mousePressEvent(QMouseEvent *e)
 {
+    cv::Mat rendered = cv_img.clone();
+    cv::Mat all_clicked_masks = cv::Mat::zeros(fastsam_results[0].size(), fastsam_results[0].type());
+
     if (e->button() == Qt::RightButton)
     {
     }
@@ -190,25 +207,37 @@ void customLabel::mousePressEvent(QMouseEvent *e)
             cords.erase(std::remove(cords.begin(), cords.end(), cv::Point2f(qcords.x(), qcords.y())), cords.end());
         }
 
-        std::tie(image_with_masks, clicked_mask) = fastsam.RenderSingleMask(cords);
+        for (const auto& mask: fastsam_results) {
+            for (int j = 0; j < cords.size(); j++) {
+                if (mask.at<float>(cords[j].y, cords[j].x) == 1.0 && all_clicked_masks.at<float>(cords[j].y, cords[j].x) != 1.0) {
+                    all_clicked_masks.setTo(1.0, mask == 1.0);
+                    clicked_mask = all_clicked_masks;
+                    ColorMask(mask, rendered, false);
+                }
+            }
 
-        QImage qimage(image_with_masks.data, image_with_masks.cols, image_with_masks.rows, image_with_masks.step, QImage::Format_BGR888);
+        }
+
+        QImage qimage(rendered.data, rendered.cols, rendered.rows, rendered.step, QImage::Format_BGR888);
 
         img = qimage;
         repaint();
     }
 }
 
+
 QRect customLabel::getTargetRect(QImage img)
 {
     return QRect(QPoint(getTransformedPoint(this->size(), img.size(), {0, 0}, false)), QPoint(getTransformedPoint(this->size(), img.size(), {img.width(), img.height()}, false)));
 }
+
 
 void customLabel::paintEvent(QPaintEvent *event)
 {
     QPainter p(this);
     p.drawImage(getTargetRect(img), img);
 }
+
 
 QPoint customLabel::getTransformedPoint(QSize window, QSize img, QPoint pt, bool isSourcePoint)
 {
@@ -251,4 +280,34 @@ QPoint customLabel::getTransformedPoint(QSize window, QSize img, QPoint pt, bool
     }
 
     return QPoint(x0, y0);
+}
+
+
+cv::Scalar customLabel::RandomColor()
+{
+    int b = rand() % 256;
+    int g = rand() % 256;
+    int r = rand() % 256;
+    return cv::Scalar(b, g, r);
+}
+
+
+void customLabel::ColorMask(const cv::Mat& mask, cv::Mat& rendered, bool multi_color) {
+    cv::Scalar color;
+
+    if (multi_color) { color = RandomColor(); }
+    else { color = cv::Scalar(255, 255, 250); }
+
+    for (int y = 0; y < mask.rows; y++) {
+        const float* mp = mask.ptr<float>(y);
+        uchar* p = rendered.ptr<uchar>(y);
+        for (int x = 0; x < mask.cols; x++) {
+            if (mp[x] == 1.0) {
+                p[0] = cv::saturate_cast<uchar>(p[0] * 0.5 + color[0] * 0.5);
+                p[1] = cv::saturate_cast<uchar>(p[1] * 0.5 + color[1] * 0.5);
+                p[2] = cv::saturate_cast<uchar>(p[2] * 0.5 + color[2] * 0.5);
+            }
+            p += 3;
+        }
+    }
 }

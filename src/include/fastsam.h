@@ -1,76 +1,68 @@
-#pragma once
-#include <string>
-#include <opencv2/opencv.hpp>
+#ifndef FASTSAM_H
+#define FASTSAM_H
 
-#include <opencv2/core.hpp>
+#include "ovload.h"
+#include <opencv2/opencv.hpp>
 #include <openvino/openvino.hpp>
 
 
-class FastSAM
+class FastSAM : public OVload
 {
 public:
-    FastSAM() {};
-    ~FastSAM(){};
+    FastSAM() : OVload() {};
+    ~FastSAM() {};
 
-    bool Initialize(const std::string& xml_path, int input_number, int output_number);
+    bool Initialize(const std::string& xml_path, int input_number, int output_number) {
+        return OVload::Initialize(xml_path, input_number, output_number);
+    }
 
-    std::vector<cv::Mat> Infer(const std::string &image_path);
+    void Infer(const std::string &image_path) {
+        OVload::Infer(image_path);
+    }
 
-    cv::Mat Render();
-    std::tuple<cv::Mat, cv::Mat> RenderSingleMask(std::vector<cv::Point2f> cords);
-
-private:
-    std::vector<cv::Mat> Postprocess(cv::Mat& image);
-
-
-
-    std::vector<cv::Mat> BuildOutput();
-
+protected:
+    void xywh2xyxy(cv::Mat &box);
     void ScaleBoxes(cv::Mat& box, const cv::Size& oriSize);
 
-    std::vector<cv::Mat> ProcessMaskNative(const cv::Mat& oriImage, cv::Mat& protos, cv::Mat& masks_in, cv::Mat& bboxes, cv::Size shape);
-    std::vector<cv::Mat> NMS(cv::Mat& prediction, int max_det = 300);
-
-    void xywh2xyxy(cv::Mat &box);
-    void ColorMask(const cv::Mat& mask, cv::Mat& rendered, bool multi_color=true);
-
-    ov::Tensor Preprocess(cv::Mat& image);
-
     bool ConvertSize(cv::Mat& image);
-    bool ConvertLayout(cv::Mat& image);
-    bool ParseArgs(int input_number, int output_number);
-    bool BuildProcessor();
 
-    ov::Tensor BuildTensor();
+    std::vector<cv::Mat> NMS(cv::Mat& prediction, int max_det = 300);
+    std::vector<cv::Mat> ProcessMaskNative(const cv::Mat& oriImage, cv::Mat& protos, cv::Mat& masks_in, cv::Mat& bboxes, cv::Size shape);
 
-private:
-    std::shared_ptr<ov::Model> m_model;
-    ov::CompiledModel m_compiled_model;
+    ov::Tensor Preprocess(cv::Mat& image) override {
+        if(!ConvertSize(image)) {
+            return ov::Tensor();
+        }
 
-    ov::Core m_core;
-    ov::InferRequest m_request;
-    std::shared_ptr<ov::preprocess::PrePostProcessor> m_ppp;
+        if(!ConvertLayout(image)) {
+            return ov::Tensor();
+        }
 
-    float m_conf;
-    float m_iou;
+        return BuildTensor();
+    }
 
-    std::vector<float> input_data;
+    std::vector<cv::Mat> Postprocess(cv::Mat& image) override {
+        std::vector<cv::Mat> builded_output = BuildOutput();
+        cv::Mat prediction = builded_output[0];
+        cv::Mat proto = builded_output[1];
 
-    int input_width = 0;
-    int input_height = 0;
-    int input_channel = 3;
+        std::vector<cv::Mat> remat = NMS(prediction, 100);
 
-    std::vector<ov::Shape> model_input_shape;
-    std::vector<ov::Shape> model_output_shape;
+        if(remat.size() < 2) {
+            return std::vector<cv::Mat>();
+        }
 
-    float ratio = 1.0f;
+        cv::Mat box = remat[0];
+        cv::Mat mask = remat[1];
+        ScaleBoxes(box, image.size());
+
+        return ProcessMaskNative(image, proto, mask, box, image.size());
+    }
+
+protected:
     float dw = 0.f;
     float dh = 0.f;
-
-    int mw = 160;
-    int mh = 160;
-
-    cv::Mat m_image;
-    std::vector<cv::Mat> result;
-    cv::Mat image;
+    float ratio = 1.0f;
 };
+
+#endif // FASTSAM_H
