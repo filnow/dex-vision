@@ -42,7 +42,7 @@ void OVload::Infer(const std::string &image_path)
         m_request.set_input_tensor(input_tensor);
         m_request.infer();
 
-        result =  Postprocess(image);
+        result = Postprocess(image);
     }
     catch (std::exception& e) {
         qDebug() << "Failed to Infer! ec: " << e.what() << '\n';
@@ -123,8 +123,12 @@ std::vector<cv::Mat> OVload::BuildOutput()
     std::vector<cv::Mat> build_outputs;
 
     for (size_t i = 0; i < num_outputs; i++) {
-        auto* ptr = m_request.get_output_tensor(0).data();
-        build_outputs.push_back(cv::Mat(model_output_shape[i][1], model_output_shape[i][2], CV_32F, ptr));
+        auto* ptr = m_request.get_output_tensor(i).data();
+        if (i == 1) {
+            build_outputs.push_back(cv::Mat(model_output_shape[i][1], model_output_shape[i][2] * model_output_shape[i][3], CV_32F, ptr));
+        } else {
+            build_outputs.push_back(cv::Mat(model_output_shape[i][1], model_output_shape[i][2], CV_32F, ptr));
+        }
     }
 
     return build_outputs;

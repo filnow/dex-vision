@@ -14,17 +14,14 @@ cv::Scalar RandomColor()
     return cv::Scalar(b, g, r);
 }
 
-bool FastSAM::Initialize(const std::string &xml_path, float conf, float iou)
+bool FastSAM::Initialize(const std::string &xml_path, int input_number, int output_number)
 {
-    m_conf = conf;
-    m_iou = iou;
-
     if(!std::filesystem::exists(xml_path))
         return false;
 
     m_model = m_core.read_model(xml_path);
 
-    if(!ParseArgs())
+    if(!ParseArgs(input_number, output_number))
         return false;
 
 
@@ -62,30 +59,30 @@ std::vector<cv::Mat> FastSAM::Infer(const std::string &image_path)
     return result;
 }
 
-bool FastSAM::ParseArgs()
+bool FastSAM::ParseArgs(int input_number, int output_number)
 {
     try {
-        model_input_shape = m_model->input().get_shape();
-        model_output0_shape = m_model->output(0).get_shape();
-        model_output1_shape = m_model->output(1).get_shape();
+        size_t num_inputs = m_model->inputs().size();
+        size_t num_outputs = m_model->outputs().size();
 
-        qDebug()  << "xml input shape:" << model_input_shape << "\n";
-        qDebug() << "xml output shape 0:" << model_output0_shape << "\n";
-        qDebug() << "xml output shape 1:" << model_output1_shape << "\n";
+        for (size_t i = 0; i < num_inputs; i++) {
+            model_input_shape.push_back(m_model->input(i).get_shape());
+        }
 
-        // [1, 3, 640, 640]
-        input_channel = model_input_shape[1];
-        input_height = model_input_shape[2];
-        input_width = model_input_shape[3];
+        for (size_t i = 0; i < num_outputs; i++) {
+            model_output_shape.push_back(m_model->output(i).get_shape());
+        }
+
+        input_channel = model_input_shape[input_number-1][1];
+        input_height = model_input_shape[input_number-1][2];
+        input_width = model_input_shape[input_number-1][3];
 
         this->input_data.resize(input_channel * input_height * input_height);
 
         qDebug() << "model input height:" << input_height << " input width:" << input_width << "\n";
 
-        // output0 = [1,37,8400]
-        // output1 = [1,32,160,160]
-        mh = model_output1_shape[2];
-        mw = model_output1_shape[3];
+        mh = model_output_shape[output_number-1][-2];
+        mw = model_output_shape[output_number-1][-1];
 
         qDebug() << "model output mh:" << mh << " output mw:" << mw << "\n";
 
@@ -159,6 +156,9 @@ std::vector<cv::Mat> FastSAM::ProcessMaskNative(const cv::Mat &image, cv::Mat &p
 
 std::vector<cv::Mat> FastSAM::NMS(cv::Mat &prediction, int max_det)
 {
+    float m_conf = 0.6;
+    float m_iou = 0.9;
+
     std::vector<cv::Mat> vreMat;
     cv::Mat temData = cv::Mat();
     prediction = prediction.t(); // [37, 8400] --> [rows:8400, cols:37]
@@ -293,10 +293,11 @@ ov::Tensor FastSAM::Preprocess(cv::Mat &image)
     return BuildTensor();
 }
 
-std::vector<cv::Mat> FastSAM::Postprocess(const cv::Mat& oriImage)
+std::vector<cv::Mat> FastSAM::Postprocess(cv::Mat& image)
 {
-    cv::Mat prediction = BuildOutput0();
-    cv::Mat proto = BuildOutput1();
+    std::vector<cv::Mat> builded_output = BuildOutput();
+    cv::Mat prediction = builded_output[0];
+    cv::Mat proto = builded_output[1];
 
     std::vector<cv::Mat> remat = NMS(prediction, 100);
 
@@ -307,22 +308,30 @@ std::vector<cv::Mat> FastSAM::Postprocess(const cv::Mat& oriImage)
 
     cv::Mat box = remat[0];
     cv::Mat mask = remat[1];
-    ScaleBoxes(box, oriImage.size());
+    ScaleBoxes(box, image.size());
 
-    return ProcessMaskNative(oriImage, proto, mask, box, oriImage.size());
+    return ProcessMaskNative(image, proto, mask, box, image.size());
 }
 
-cv::Mat FastSAM::BuildOutput0()
+
+std::vector<cv::Mat> FastSAM::BuildOutput()
 {
-    auto* ptr = m_request.get_output_tensor(0).data();
-    return cv::Mat(model_output0_shape[1], model_output0_shape[2], CV_32F, ptr);
+    size_t num_outputs = m_model->outputs().size();
+    std::vector<cv::Mat> build_outputs;
+
+    for (size_t i = 0; i < num_outputs; i++) {
+        auto* ptr = m_request.get_output_tensor(i).data();
+        if (i == 1) {
+            build_outputs.push_back(cv::Mat(model_output_shape[i][1], model_output_shape[i][2] * model_output_shape[i][3], CV_32F, ptr));
+        } else {
+            build_outputs.push_back(cv::Mat(model_output_shape[i][1], model_output_shape[i][2], CV_32F, ptr));
+        }
+    }
+
+    return build_outputs;
 }
 
-cv::Mat FastSAM::BuildOutput1()
-{
-    auto* ptr = m_request.get_output_tensor(1).data();
-    return cv::Mat(model_output1_shape[1], model_output1_shape[2] * model_output1_shape[3], CV_32F, ptr);
-}
+
 
 bool FastSAM::ConvertSize(cv::Mat &image)
 {

@@ -12,17 +12,19 @@ public:
     FastSAM() {};
     ~FastSAM(){};
 
-    bool Initialize(const std::string& xml_path, float conf, float iou);
+    bool Initialize(const std::string& xml_path, int input_number, int output_number);
+
     std::vector<cv::Mat> Infer(const std::string &image_path);
 
     cv::Mat Render();
     std::tuple<cv::Mat, cv::Mat> RenderSingleMask(std::vector<cv::Point2f> cords);
 
 private:
-    std::vector<cv::Mat> Postprocess(const cv::Mat& oriImage);
+    std::vector<cv::Mat> Postprocess(cv::Mat& image);
 
-    cv::Mat BuildOutput0();
-    cv::Mat BuildOutput1();
+
+
+    std::vector<cv::Mat> BuildOutput();
 
     void ScaleBoxes(cv::Mat& box, const cv::Size& oriSize);
 
@@ -36,7 +38,7 @@ private:
 
     bool ConvertSize(cv::Mat& image);
     bool ConvertLayout(cv::Mat& image);
-    bool ParseArgs();
+    bool ParseArgs(int input_number, int output_number);
     bool BuildProcessor();
 
     ov::Tensor BuildTensor();
@@ -57,9 +59,9 @@ private:
     int input_width = 0;
     int input_height = 0;
     int input_channel = 3;
-    ov::Shape model_input_shape;
-    ov::Shape model_output0_shape;
-    ov::Shape model_output1_shape;
+
+    std::vector<ov::Shape> model_input_shape;
+    std::vector<ov::Shape> model_output_shape;
 
     float ratio = 1.0f;
     float dw = 0.f;

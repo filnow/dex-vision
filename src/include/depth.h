@@ -20,10 +20,6 @@ public:
         OVload::Infer(image_path);
     }
 
-    cv::Mat RenderDepth() {
-        return Render();
-    }
-
 protected:
     ov::Tensor Preprocess(cv::Mat& image) override {
         cv::resize(image, image, cv::Size(518, 518));

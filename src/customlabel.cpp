@@ -16,7 +16,7 @@ void customLabel::ModelInit()
     QString samPath = appDir.filePath("models/FastSAM-x.xml");
     QString depthPath = appDir.filePath("models/depth_anything_vitb14.xml");
 
-    if (fastsam.Initialize(samPath.toStdString(), 0.6, 0.9)) {
+    if (fastsam.Initialize(samPath.toStdString(), 1, 2)) {
         sam_init = true;
     }
 
