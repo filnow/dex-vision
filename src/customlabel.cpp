@@ -16,6 +16,7 @@ void customLabel::ModelInit()
     appDir.cdUp(); appDir.cdUp();
     QString samPath = appDir.filePath("models/FastSAM-x.xml");
     QString depthPath = appDir.filePath("models/depth_anything_vitb14.xml");
+    QString inpaintPath = appDir.filePath("models/lama_fp32.xml");
 
     if (fastsam.Initialize(samPath.toStdString(), 1, 2)) {
         sam_init = true;
@@ -23,6 +24,10 @@ void customLabel::ModelInit()
 
     if (depth.Initialize(depthPath.toStdString(), 1, 1)) {
         depth_init = true;
+    }
+
+    if (inpaint.Initialize(inpaintPath.toStdString(), 2, 1)) {
+        inpaint_init = true;
     }
 }
 
@@ -80,6 +85,14 @@ void customLabel::SetImage(QImage image, QString file_name)
 QImage customLabel::SaveImage()
 {
     return img;
+}
+
+
+void customLabel::ImageInpaint()
+{
+    if (inpaint_init) {
+        inpaint.Infer();
+    }
 }
 
 

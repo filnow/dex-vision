@@ -54,6 +54,7 @@
     <addaction name="actionSegment_All"/>
     <addaction name="actionRemove_Background"/>
     <addaction name="actionDepth"/>
+    <addaction name="actionInpaint"/>
    </widget>
    <widget class="QMenu" name="menuEffects">
     <property name="title">
@@ -99,6 +100,11 @@
   <action name="actionClear">
    <property name="text">
     <string>Clear</string>
+   </property>
+  </action>
+  <action name="actionInpaint">
+   <property name="text">
+    <string>Inpaint</string>
    </property>
   </action>
  </widget>

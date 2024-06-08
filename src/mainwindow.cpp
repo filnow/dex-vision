@@ -117,6 +117,12 @@ void MainWindow::on_actionDepth_triggered()
     this->ui->label_pic->ShowDepth();
 }
 
+
+void MainWindow::on_actionInpaint_triggered()
+{
+    this->ui->label_pic->ImageInpaint();
+}
+
 //EFFECTS
 
 void MainWindow::on_actionScanner_triggered()

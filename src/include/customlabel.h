@@ -14,6 +14,7 @@
 #include <opencv2/core.hpp>
 #include "fastsam.h"
 #include "depth.h"
+#include "inpaint.h"
 
 
 class customLabel : public QLabel
@@ -32,6 +33,7 @@ public:
     void ScanImage();
     void RemoveBackground();
     void ModelInit();
+    void ImageInpaint();
     QImage SaveImage();
 
 signals:
@@ -47,6 +49,7 @@ private:
 
     FastSAM fastsam;
     Depth depth;
+    Inpaint inpaint;
 
     std::vector<cv::Mat> fastsam_results;
     cv::Mat clicked_mask;
@@ -55,6 +58,7 @@ private:
 
     bool sam_init = false;
     bool depth_init = false;
+    bool inpaint_init = false;
 
 private:
     void mousePressEvent(QMouseEvent *e) override;
